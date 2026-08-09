@@ -2,9 +2,9 @@ module.exports = {
   apps: [
     {
       name: 'ai-agent-bot',
-      cwd: __dirname + '/apps/bot',
-      script: 'node_modules/.bin/tsx',
-      args: 'src/index.ts',
+      cwd: __dirname,
+      script: 'scripts/bot-runner.sh',
+      interpreter: 'bash',
       autorestart: true,
       max_memory_restart: '500M',
       restart_delay: 3000,

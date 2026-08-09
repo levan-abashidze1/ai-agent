@@ -7,8 +7,8 @@ echo ""
 
 # Node.js (via NodeSource - installs v20)
 if ! command -v node &>/dev/null; then
-  echo "[1/4] Installing Node.js 20..."
-  curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+  echo "[1/4] Installing Node.js 22..."
+  curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
   apt-get install -y nodejs
 else
   NODE_VER=$(node --version)

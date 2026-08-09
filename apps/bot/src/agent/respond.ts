@@ -71,7 +71,7 @@ export async function respondTo(
   const maxAttempts = 3;
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
-      sent = await sock.sendMessage(msg.groupJid, { text }, { quoted: waMessageStub(msg) });
+      sent = await sock.sendMessage(msg.groupJid, { text });
       logger.info({ attempt }, 'message sent');
       break;
     } catch (err) {

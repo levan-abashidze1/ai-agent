@@ -60,6 +60,15 @@ export async function respondTo(
     return;
   }
 
+  try {
+    const meta = await sock.groupMetadata(msg.groupJid);
+    const participants = meta.participants.map((p) => p.id);
+    await sock.assertSessions(participants, true);
+    logger.info({ count: participants.length }, 'asserted group sessions');
+  } catch (err) {
+    logger.warn({ err }, 'failed to assert sessions, will try to send anyway');
+  }
+
   const sent = await sock.sendMessage(msg.groupJid, { text }, { quoted: waMessageStub(msg) });
 
   if (sent?.key?.id) {

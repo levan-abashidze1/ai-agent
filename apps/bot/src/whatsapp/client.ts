@@ -32,8 +32,11 @@ export async function startWhatsApp(onReady: OnSocketReady): Promise<void> {
     logger: pino({ level: 'warn' }) as never,
     printQRInTerminal: false,
     syncFullHistory: false,
-    markOnlineOnConnect: false,
+    markOnlineOnConnect: true,
     browser: ['AI Agent', 'Chrome', '120'],
+    getMessage: async () => {
+      return { conversation: '' };
+    },
   });
 
   sock.ev.on('creds.update', saveCreds);

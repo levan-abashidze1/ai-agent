@@ -61,15 +61,31 @@ export async function respondTo(
   }
 
   try {
-    const meta = await sock.groupMetadata(msg.groupJid);
-    const participants = meta.participants.map((p) => p.id);
-    await sock.assertSessions(participants, true);
-    logger.info({ count: participants.length }, 'asserted group sessions');
+    await sock.sendPresenceUpdate('available');
+    await sock.sendPresenceUpdate('composing', msg.groupJid);
   } catch (err) {
-    logger.warn({ err }, 'failed to assert sessions, will try to send anyway');
+    logger.warn({ err }, 'presence update failed');
   }
 
-  const sent = await sock.sendMessage(msg.groupJid, { text }, { quoted: waMessageStub(msg) });
+  let sent: Awaited<ReturnType<WASocket['sendMessage']>> = undefined;
+  const maxAttempts = 3;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      sent = await sock.sendMessage(msg.groupJid, { text }, { quoted: waMessageStub(msg) });
+      logger.info({ attempt }, 'message sent');
+      break;
+    } catch (err) {
+      logger.warn({ err, attempt }, 'send failed, retrying...');
+      if (attempt === maxAttempts) throw err;
+      await new Promise((r) => setTimeout(r, 1500 * attempt));
+    }
+  }
+
+  try {
+    await sock.sendPresenceUpdate('paused', msg.groupJid);
+  } catch {
+    /* ignore */
+  }
 
   if (sent?.key?.id) {
     await saveMessage(

@@ -8,18 +8,23 @@ import {
 } from 'baileys';
 import { Boom } from '@hapi/boom';
 import pino from 'pino';
-import qrcode from 'qrcode-terminal';
 import { env } from '../env.js';
 import { logger } from '../logger.js';
+import { setConnected, setQr, startQrServer } from './qr-server.js';
 
 export type OnSocketReady = (sock: WASocket) => void | Promise<void>;
 
+let qrServerStarted = false;
+
 export async function startWhatsApp(onReady: OnSocketReady): Promise<void> {
+  if (!qrServerStarted) {
+    startQrServer(Number(process.env.QR_PORT ?? 8080));
+    qrServerStarted = true;
+  }
+
   const { state, saveCreds } = await useMultiFileAuthState(env.AUTH_DIR);
   const { version, isLatest } = await fetchLatestBaileysVersion();
   logger.info({ version, isLatest }, 'baileys version');
-
-  const usePairing = !state.creds.registered && !!env.BOT_PHONE;
 
   const sock = makeWASocket({
     version,
@@ -33,41 +38,23 @@ export async function startWhatsApp(onReady: OnSocketReady): Promise<void> {
 
   sock.ev.on('creds.update', saveCreds);
 
-  if (usePairing) {
-    setTimeout(async () => {
-      try {
-        const phone = env.BOT_PHONE.replace(/\D/g, '');
-        const code = await sock.requestPairingCode(phone);
-        const pretty = code.match(/.{1,4}/g)?.join('-') ?? code;
-        console.log('');
-        console.log('======================================');
-        console.log(' WhatsApp Pairing Code: ' + pretty);
-        console.log('======================================');
-        console.log('');
-        console.log('On the bot phone: WhatsApp → Settings → Linked Devices');
-        console.log('→ Link a Device → Link with phone number instead');
-        console.log('→ enter the code above');
-        console.log('');
-      } catch (err) {
-        logger.error({ err }, 'failed to request pairing code');
-      }
-    }, 3000);
-  }
-
   sock.ev.on('connection.update', (update: Partial<ConnectionState>) => {
     const { connection, lastDisconnect, qr } = update;
 
-    if (qr && !usePairing) {
-      logger.info('scan this QR code with your WhatsApp mobile app:');
-      qrcode.generate(qr, { small: true });
+    if (qr) {
+      setQr(qr);
+      logger.info('QR ready — open http://<VPS-IP>:8080 in your browser');
     }
 
     if (connection === 'open') {
+      setQr(null);
+      setConnected(true);
       logger.info({ user: sock.user?.id }, 'whatsapp connected');
       void onReady(sock);
     }
 
     if (connection === 'close') {
+      setConnected(false);
       const reason =
         lastDisconnect?.error instanceof Boom
           ? lastDisconnect.error.output?.statusCode

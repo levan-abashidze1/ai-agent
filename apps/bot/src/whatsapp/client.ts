@@ -19,6 +19,8 @@ export async function startWhatsApp(onReady: OnSocketReady): Promise<void> {
   const { version, isLatest } = await fetchLatestBaileysVersion();
   logger.info({ version, isLatest }, 'baileys version');
 
+  const usePairing = !state.creds.registered && !!env.BOT_PHONE;
+
   const sock = makeWASocket({
     version,
     auth: state,
@@ -31,10 +33,31 @@ export async function startWhatsApp(onReady: OnSocketReady): Promise<void> {
 
   sock.ev.on('creds.update', saveCreds);
 
+  if (usePairing) {
+    setTimeout(async () => {
+      try {
+        const phone = env.BOT_PHONE.replace(/\D/g, '');
+        const code = await sock.requestPairingCode(phone);
+        const pretty = code.match(/.{1,4}/g)?.join('-') ?? code;
+        console.log('');
+        console.log('======================================');
+        console.log(' WhatsApp Pairing Code: ' + pretty);
+        console.log('======================================');
+        console.log('');
+        console.log('On the bot phone: WhatsApp → Settings → Linked Devices');
+        console.log('→ Link a Device → Link with phone number instead');
+        console.log('→ enter the code above');
+        console.log('');
+      } catch (err) {
+        logger.error({ err }, 'failed to request pairing code');
+      }
+    }, 3000);
+  }
+
   sock.ev.on('connection.update', (update: Partial<ConnectionState>) => {
     const { connection, lastDisconnect, qr } = update;
 
-    if (qr) {
+    if (qr && !usePairing) {
       logger.info('scan this QR code with your WhatsApp mobile app:');
       qrcode.generate(qr, { small: true });
     }

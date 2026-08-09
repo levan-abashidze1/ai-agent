@@ -19,5 +19,6 @@ export const env = {
   DEEPSEEK_BASE_URL: process.env.DEEPSEEK_BASE_URL ?? 'https://api.deepseek.com',
   BOT_NAME: process.env.BOT_NAME ?? 'Agent',
   GROUP_JID: process.env.GROUP_JID ?? '',
+  BOT_PHONE: process.env.BOT_PHONE ?? '',
   AUTH_DIR: process.env.AUTH_DIR ?? resolve(__dirname, '../auth_info_baileys'),
 };

@@ -1,0 +1,13 @@
+{
+  "name": "admin",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "echo 'Phase 5 - not implemented yet'",
+    "build": "echo 'Phase 5 - not implemented yet'",
+    "start": "echo 'Phase 5 - not implemented yet'"
+  },
+  "dependencies": {
+    "@ai-agent/db": "workspace:*"
+  }
+}

@@ -75,6 +75,9 @@ export interface SettingsMap {
   llm_temperature: number;
   llm_max_tokens: number;
   tools_enabled: Record<string, boolean>;
+  smart_mode: boolean;
+  smart_min_gap_seconds: number;
+  proactive_probability: number;
 }
 
 type TableDef<Row, RequiredInsert extends keyof Row> = {
